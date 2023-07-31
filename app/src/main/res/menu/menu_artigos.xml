@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+
+    <item
+        android:id="@+id/pesquisar"
+        android:orderInCategory="100"
+        app:showAsAction="ifRoom"
+        android:enabled="true"
+        android:title="@string/pesquisar"
+        android:icon="@drawable/ic_search_black_24dp"
+       />
+
+    <item
+        android:id="@+id/filtrar_busca_artigos"
+        android:orderInCategory="100"
+        app:showAsAction="ifRoom"
+        android:enabled="true"
+        android:title="@string/filtrar"
+        android:icon="@drawable/ic_filtro"/>
+
+</menu>
