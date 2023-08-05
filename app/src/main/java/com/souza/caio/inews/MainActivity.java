@@ -1,11 +1,13 @@
 package com.souza.caio.inews;
 
-import android.content.Context;
+import static com.souza.caio.inews.Utils.loadCountry;
+import static com.souza.caio.inews.Utils.readApiKey;
+import static com.souza.caio.inews.Utils.showToastMessage;
+import static com.souza.caio.inews.connection.ApiClient.getInstance;
+
 import android.content.DialogInterface;
-import android.content.res.AssetManager;
 import android.os.Bundle;
-import android.system.Os;
-import android.util.Log;
+import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -17,7 +19,6 @@ import android.widget.ProgressBar;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
@@ -27,47 +28,38 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
-import com.google.gson.GsonBuilder;
 import com.miguelcatalan.materialsearchview.MaterialSearchView;
 import com.souza.caio.inews.adapter.AdapterJournal;
 import com.souza.caio.inews.adapter.AdapterNews;
-import com.souza.caio.inews.connection.ApiClient;
-import com.souza.caio.inews.journal.JournalsListAPI;
 import com.souza.caio.inews.journal.Jornal;
+import com.souza.caio.inews.journal.JournalsListAPI;
 import com.souza.caio.inews.news.Article;
 import com.souza.caio.inews.news.RecentArcticlesListAPI;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
-import java.util.Scanner;
 
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
 public class MainActivity extends AppCompatActivity {
-    public static final String AVISO_FILTRO = "Filtro apenas para matérias!";
-    public static final String TITULO_ALERTDIALOG = "Selecione a categoria de notícias: ( Deslize para baixo para mais opções)";
+    private static final String AVISO_FILTRO = "Filtro apenas para matérias!";
+    private static final String TITULO_ALERTDIALOG = "Selecione a categoria de notícias:";
+    private static final String DEFAULT_SORT_BY = "publishedAt";
     private RecyclerView recyclerView_sites;
     private List<Article> artigos;
     private MaterialSearchView searchView;
     private String API_KEY;
     private TextView tipoConteudo;
-
     private List<Jornal> jornais;
-
     private SwipeRefreshLayout swipe;
-
     private List<String> categoriasBr;
     private List<String> categorias;
     private int INDEX_SELECIONADO = -1;
     private List<RadioButton> opcoesFiltros;
     private RadioButton btnRadioOne;
     private ProgressBar carregando;
-
     private boolean isMateriasExibindo;
     private ImageButton btnVerJornais;
     private ImageButton btnVerMaterias;
@@ -110,7 +102,7 @@ public class MainActivity extends AppCompatActivity {
             if (isMateriasExibindo) {
                 filtrar();
             } else {
-                exibirMensagem(AVISO_FILTRO);
+                showToastMessage(this, AVISO_FILTRO);
             }
         }
 
@@ -127,7 +119,7 @@ public class MainActivity extends AppCompatActivity {
         configurarBarraDePesquisa();
         iniciarComponentes();
         isMateriasExibindo = true;
-        String pais = coletarPais();
+        String pais = loadCountry();
         coletarJson(pais, API_KEY);
     }
 
@@ -142,25 +134,41 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onSearchViewClosed() {
                 if (isMateriasExibindo) {
-                    String pais = coletarPais();
+                    String pais = loadCountry();
+                    btnVerJornais.setVisibility(View.VISIBLE);
                     coletarJson(pais, API_KEY);
                 }
             }
         });
 
+
         searchView.setOnQueryTextListener(new MaterialSearchView.OnQueryTextListener() {
+            private Handler handler = new Handler();
+            private boolean textChanged = false;
+
             @Override
             public boolean onQueryTextSubmit(String query) {
                 return false;
             }
 
             @Override
-            public boolean onQueryTextChange(String newText) {
-                if (newText != null && !newText.isEmpty()) {
-                    pesquisar(newText);
-                } else {
-                }
+            public boolean onQueryTextChange(final String newText) {
+                handler.removeCallbacksAndMessages(null); // Remove any pending callbacks
 
+                if (newText != null && !newText.isEmpty()) {
+                    textChanged = true; // Mark the text as changed
+
+                    // Schedule a new Runnable to check if the text has changed after 1 second
+                    handler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (textChanged) {
+                                pesquisar(newText); // Call the method if text hasn't changed
+                            }
+                            textChanged = false; // Reset the flag after 1 seconds
+                        }
+                    }, 1000); // 1000 milliseconds = 1 second
+                }
                 return true;
             }
         });
@@ -171,11 +179,6 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         toolbar.setTitleTextColor(getResources().getColor(R.color.branco));
     }
-
-    private void exibirMensagem(String mensagem) {
-        Toast.makeText(MainActivity.this, mensagem, Toast.LENGTH_LONG).show();
-    }
-
 
     private void iniciarComponentes() {
         carregando = findViewById(R.id.progressbar_carregando_noticias_main);
@@ -206,7 +209,7 @@ public class MainActivity extends AppCompatActivity {
                 btnVerJornais.setVisibility(View.VISIBLE);
 
                 tipoConteudo.setText(R.string.noticias);
-                String pais = coletarPais();
+                String pais = loadCountry();
                 coletarJson(pais, API_KEY);
                 isMateriasExibindo = true;
             }
@@ -229,7 +232,7 @@ public class MainActivity extends AppCompatActivity {
                 if (isMateriasExibindo) {
                     carregando.setVisibility(View.VISIBLE);
                     tipoConteudo.setText(R.string.noticias);
-                    String pais = coletarPais();
+                    String pais = loadCountry();
                     coletarJson(pais, API_KEY);
                 } else {
                     tipoConteudo.setText(R.string.jornais);
@@ -242,7 +245,7 @@ public class MainActivity extends AppCompatActivity {
     public void coletarJornais(String apiKey) {
         btnVerJornais.setClickable(false);
         btnVerMaterias.setClickable(false);
-        Call<JournalsListAPI> call = ApiClient.getInstance().getApi().getJornalsNoCategory(apiKey);
+        Call<JournalsListAPI> call = getInstance().getApi().getJornalsNoCategory(apiKey, DEFAULT_SORT_BY);
 
         call.enqueue(new Callback<JournalsListAPI>() {
             @Override
@@ -307,12 +310,8 @@ public class MainActivity extends AppCompatActivity {
             btnRadio.setText(categoriasBr.get(indice));
             btnRadio.setTextSize(15);
             btnRadio.setTextColor(getResources().getColor(R.color.preto));
+            btnRadio.setChecked(indice == INDEX_SELECIONADO);
 
-            if (indice == INDEX_SELECIONADO) {
-                btnRadio.setChecked(true);
-            } else {
-                btnRadio.setChecked(false);
-            }
 
             final int finalIndice = indice;
 
@@ -338,7 +337,7 @@ public class MainActivity extends AppCompatActivity {
                     coletarJornais(API_KEY);
                 } else {
                     tipoConteudo.setText(R.string.noticias);
-                    String pais = coletarPais();
+                    String pais = loadCountry();
                     coletarJson(pais, API_KEY);
                 }
             }
@@ -367,9 +366,9 @@ public class MainActivity extends AppCompatActivity {
         btnVerMaterias.setClickable(false);
         btnVerJornais.setClickable(false);
         if (INDEX_SELECIONADO >= 0) {
-            call = ApiClient.getInstance().getApi().getHeadlines(pais, apiKey, 100, categorias.get(INDEX_SELECIONADO));
+            call = getInstance().getApi().getHeadlines(pais, apiKey, 100, categorias.get(INDEX_SELECIONADO), DEFAULT_SORT_BY);
         } else {
-            call = ApiClient.getInstance().getApi().getHeadlinesNoCategory(pais, apiKey, 100);
+            call = getInstance().getApi().getHeadlinesNoCategory(pais, apiKey, 100, DEFAULT_SORT_BY);
         }
 
         call.enqueue(new Callback<RecentArcticlesListAPI>() {
@@ -378,6 +377,7 @@ public class MainActivity extends AppCompatActivity {
                 if (response.isSuccessful() && response.body() != null) {
                     carregarArtigos(response);
                     btnVerJornais.setClickable(true);
+                    btnVerMaterias.setClickable(true);
 
                     if (swipe.isRefreshing()) {
                         swipe.setRefreshing(false);
@@ -395,26 +395,31 @@ public class MainActivity extends AppCompatActivity {
     private void carregarArtigos(Response<RecentArcticlesListAPI> response) {
         artigos.clear();
         artigos = response.body().getArticles();
-        carregando.setVisibility(ViewGroup.INVISIBLE);
         AdapterNews adaptador = new AdapterNews(MainActivity.this, artigos);
         recyclerView_sites.setAdapter(adaptador);
+        carregando.setVisibility(ViewGroup.INVISIBLE);
+        recyclerView_sites.setVisibility(View.VISIBLE);
     }
 
     public void pesquisar(String pesquisa) {
         tipoConteudo.setText(R.string.noticias);
         isMateriasExibindo = true;
+        recyclerView_sites.setVisibility(View.INVISIBLE);
+        carregando.setVisibility(ViewGroup.VISIBLE);
 
         if (pesquisa.trim().isEmpty()) {
-
-            String pais = coletarPais();
+            String pais = loadCountry();
+            btnVerJornais.setVisibility(View.VISIBLE);
+            btnVerMaterias.setVisibility(View.VISIBLE);
             coletarJson(pais, API_KEY);
         } else {
+            btnVerJornais.setVisibility(View.GONE);
+            btnVerMaterias.setVisibility(View.GONE);
             Call<RecentArcticlesListAPI> call;
-
             if (INDEX_SELECIONADO >= 0) {
-                call = ApiClient.getInstance().getApi().getSearchResult(pesquisa.trim(), API_KEY, categorias.get(INDEX_SELECIONADO));
+                call = getInstance().getApi().getSearchResult(pesquisa.trim(), API_KEY, categorias.get(INDEX_SELECIONADO), DEFAULT_SORT_BY);
             } else {
-                call = ApiClient.getInstance().getApi().getSearchResultNoCategory(pesquisa.trim(), API_KEY);
+                call = getInstance().getApi().getSearchResultNoCategory(pesquisa.trim(), API_KEY, DEFAULT_SORT_BY);
             }
             call.enqueue(new Callback<RecentArcticlesListAPI>() {
                 @Override
@@ -430,25 +435,5 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
         }
-    }
-
-    public String coletarPais() {
-        Locale locale = Locale.getDefault();
-        String pais = locale.getCountry();
-        return pais.toLowerCase();
-    }
-
-    public static String readApiKey(Context context) {
-        AssetManager assetManager = context.getAssets();
-        String apiKey = null;
-
-        try {
-            InputStream inputStream = assetManager.open("api_key.txt");
-            apiKey = new Scanner(inputStream).useDelimiter("\\A").next();
-            inputStream.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return apiKey;
     }
 }

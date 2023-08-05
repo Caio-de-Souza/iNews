@@ -18,11 +18,10 @@ public class ApiClient {
         if (apiClient == null) {
             apiClient = new ApiClient();
         }
-
         return apiClient;
     }
 
-    public static NewsApiController getApi() {
+    public NewsApiController getApi() {
         return retrofit.create(NewsApiController.class);
     }
 

@@ -1,16 +1,26 @@
-<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <ScrollView
+    <!-- The top layout with a height of 50% of the screen -->
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="110dp">
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
 
-        <RadioGroup
-            android:id="@+id/radioGroup_filtro"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"></RadioGroup>
-    </ScrollView>
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+
+            <RadioGroup
+                android:id="@+id/radioGroup_filtro"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"></RadioGroup>
+        </ScrollView>
+
+    </LinearLayout>
+
 </LinearLayout>

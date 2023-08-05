@@ -1,5 +1,7 @@
 package com.souza.caio.inews.adapter;
 
+import static com.souza.caio.inews.Utils.loadCountry;
+
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
@@ -117,11 +119,5 @@ public class AdapterDetailsNews extends RecyclerView.Adapter<AdapterDetailsNews.
             e.printStackTrace();
         }
         return time;
-    }
-
-    public String loadCountry() {
-        Locale locale = Locale.getDefault();
-        String pais = locale.getCountry();
-        return pais.toLowerCase();
     }
 }

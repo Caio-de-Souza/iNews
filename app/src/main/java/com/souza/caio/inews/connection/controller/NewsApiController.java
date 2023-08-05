@@ -13,46 +13,50 @@ public interface NewsApiController {
             @Query("country") String country,
             @Query("apiKey") String apiKey,
             @Query("pageSize") int size,
-            @Query("category") String category
+            @Query("category") String category,
+            @Query("sortBy") String sortBy
     );
 
     @GET("top-headlines")
     Call<RecentArcticlesListAPI> getHeadlinesNoCategory(
             @Query("country") String country,
             @Query("apiKey") String apiKey,
-            @Query("pageSize") int size
+            @Query("pageSize") int size,
+            @Query("sortBy") String sortBy
     );
 
     @GET("everything")
     Call<RecentArcticlesListAPI> getSearchResult(
             @Query("q") String query,
             @Query("apiKey") String apiKey,
-            @Query("category") String category
+            @Query("category") String category,
+            @Query("sortBy") String sortBy
     );
 
     @GET("everything")
     Call<RecentArcticlesListAPI> getSearchResultNoCategory(
             @Query("q") String query,
-            @Query("apiKey") String apiKey
+            @Query("apiKey") String apiKey,
+            @Query("sortBy") String sortBy
     );
 
     @GET("sources")
     Call<JournalsListAPI> getJornals(
             @Query("category") String category,
             @Query("apiKey") String apiKey
-
     );
 
     @GET("sources")
     Call<JournalsListAPI> getJornalsNoCategory(
-            @Query("apiKey") String apiKey
-
+            @Query("apiKey") String apiKey,
+            @Query("sortBy") String sortBy
     );
 
     @GET("everything")
     Call<RecentArcticlesListAPI> getArticlesJornalNoCategory(
             @Query("sources") String sources,
             @Query("apiKey") String apiKey,
-            @Query("pageSize") int size
+            @Query("pageSize") int size,
+            @Query("sortBy") String sortBy
     );
 }

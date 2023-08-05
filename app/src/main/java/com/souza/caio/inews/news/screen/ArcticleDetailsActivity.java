@@ -1,5 +1,7 @@
 package com.souza.caio.inews.news.screen;
 
+import static com.souza.caio.inews.Utils.loadCountry;
+
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
@@ -150,7 +152,7 @@ public class ArcticleDetailsActivity extends AppCompatActivity {
     }
 
     public String formatDate(String data) {
-        PrettyTime prettyTime = new PrettyTime(new Locale(loadCountries()));
+        PrettyTime prettyTime = new PrettyTime(new Locale(loadCountry()));
 
         String time = null;
 
@@ -163,15 +165,7 @@ public class ArcticleDetailsActivity extends AppCompatActivity {
         } catch (ParseException e) {
             e.printStackTrace();
         }
-
         return time;
-    }
-
-    public String loadCountries() {
-        Locale locale = Locale.getDefault();
-        String pais = locale.getCountry();
-
-        return pais.toLowerCase();
     }
 
     private void loadDetails() {

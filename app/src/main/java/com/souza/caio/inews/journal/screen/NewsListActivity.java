@@ -1,5 +1,8 @@
 package com.souza.caio.inews.journal.screen;
 
+import static com.souza.caio.inews.Utils.readApiKey;
+import static com.souza.caio.inews.connection.ApiClient.getInstance;
+
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.MenuItem;
@@ -15,7 +18,6 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.souza.caio.inews.R;
 import com.souza.caio.inews.adapter.AdapterDetailsNews;
-import com.souza.caio.inews.connection.ApiClient;
 import com.souza.caio.inews.journal.Jornal;
 import com.souza.caio.inews.news.Article;
 import com.souza.caio.inews.news.RecentArcticlesListAPI;
@@ -29,9 +31,10 @@ import retrofit2.Response;
 
 public class NewsListActivity extends AppCompatActivity
 {
+    private static final String DEFAULT_SORT_BY = "publishedAt";
     private RecyclerView newsList;
     private List<Article> arcticles;
-    private final String API_KEY = "2881e06e23d144858d8fad22530a54fe";
+    private String API_KEY;
     private String id, name;
     private SwipeRefreshLayout swipe;
     private ProgressBar loadingProgressBar;
@@ -55,6 +58,7 @@ public class NewsListActivity extends AppCompatActivity
         if (intent != null)
         {
             getJournals(intent);
+            API_KEY = readApiKey(getApplicationContext());
             initComponents();
             getData(id, API_KEY);
         }
@@ -125,11 +129,7 @@ public class NewsListActivity extends AppCompatActivity
 
     public void getData(String id, String apiKey)
     {
-        Call<RecentArcticlesListAPI> call;
-
-
-        call = ApiClient.getInstance().getApi().getArticlesJornalNoCategory(id, apiKey, 100);
-
+        Call<RecentArcticlesListAPI> call = getInstance().getApi().getArticlesJornalNoCategory(id, apiKey, 100, DEFAULT_SORT_BY);
         call.enqueue(new Callback<RecentArcticlesListAPI>()
         {
             @Override
